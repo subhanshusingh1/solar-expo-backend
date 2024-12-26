@@ -1,28 +1,41 @@
 // controllers/scoreController.js
 import Score from '../model/Score.js';
+import User from '../model/User.js'; // Assuming User model is defined in User.js
 
 // Controller to handle score submission
 export const submitScore = async (req, res) => {
   try {
-    const { phone, score, gameType } = req.body;
+    const { phone, score, gameType, playerName } = req.body;
 
-    // Validate inputs
-    if (!phone || !score || !gameType) {
-      return res.status(400).json({ error: 'Phone, score, and game type are required' });
+    // Validate required inputs
+    if (!phone || !score || !gameType || !playerName) {
+      return res.status(400).json({ 
+        error: 'Phone, score, game type, and player name are required' 
+      });
     }
 
-    // Create a new score entry
+    // Find user by phone number
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Create a new score entry with user ID
     const newScore = new Score({
-      playerName: req.body.playerName || 'Anonymous',
-      phone,
-      score,
-      gameType,
+      userId: user._id,  // Required by Score model
+      playerName,        // Required by Score model
+      score,            // Required by Score model
+      gameType,         // Required by Score model
     });
 
     // Save the score to the database
     await newScore.save();
 
-    res.status(201).json({ success: true, message: 'Score submitted successfully' });
+    res.status(201).json({ 
+      success: true, 
+      message: 'Score submitted successfully',
+      score: newScore
+    });
   } catch (error) {
     console.error('Error submitting score:', error);
     res.status(500).json({ error: 'An error occurred while submitting the score' });
