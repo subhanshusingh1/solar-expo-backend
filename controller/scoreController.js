@@ -43,18 +43,44 @@ export const submitScore = async (req, res) => {
 };
 
 // Controller to fetch leaderboard for all users (sorted by score descending)
+// export const getLeaderboard = async (req, res) => {
+//   try {
+//     // Fetch all scores and sort by score in descending order (highest first)
+//     const leaderboard = await Score.find()
+//       .select('playerName score -_id')  // Only select playerName and score, exclude _id
+//       .sort({ score: -1 })  // Sort by score in descending order
+//       .limit(10);  // Limit results to top 10
+
+//     // Send the leaderboard as a response
+//     res.status(200).json(leaderboard);
+//   } catch (error) {
+//     console.error('Error fetching leaderboard:', error);
+//     res.status(500).json({ error: 'An error occurred while fetching the leaderboard' });
+//   }
+// };
 export const getLeaderboard = async (req, res) => {
   try {
-    // Fetch all scores and sort by score in descending order (highest first)
-    const leaderboard = await Score.find()
-      .select('playerName score -_id')  // Only select playerName and score, exclude _id
-      .sort({ score: -1 })  // Sort by score in descending order
-      .limit(10);  // Limit results to top 10
+    const { gameType } = req.query; // Optional game type filter
 
-    // Send the leaderboard as a response
-    res.status(200).json(leaderboard);
+    // Fetch all scores and sort by score in descending order (highest first)
+    const leaderboard = await Score.find(gameType ? { gameType } : {})
+      .select('playerName score -_id') // Only select playerName and score, exclude _id
+      .sort({ score: -1 }) // Sort by score in descending order
+      .limit(10); // Limit results to top 10
+
+    // Add a play count for each player
+    const leaderboardWithCount = await Promise.all(
+      leaderboard.map(async (entry) => {
+        const playCount = await Score.countDocuments({ playerName: entry.playerName });
+        return { ...entry.toObject(), playCount };
+      })
+    );
+
+    // Send the leaderboard with play count as a response
+    res.status(200).json(leaderboardWithCount);
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
     res.status(500).json({ error: 'An error occurred while fetching the leaderboard' });
   }
 };
+
