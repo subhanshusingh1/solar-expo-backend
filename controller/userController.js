@@ -14,10 +14,10 @@ const registerUser = async (req, res) => {
     }
 
     // Check if the phone already exists
-    const existingUser = await User.findOne({ phone });
-    if (existingUser) {
-      return res.status(400).json({ error: 'Phone number already registered' });
-    }
+    // const existingUser = await User.findOne({ phone });
+    // if (existingUser) {
+    //   return res.status(400).json({ error: 'Phone number already registered' });
+    // }
 
     // Create new user
     const newUser = new User({
